@@ -20,8 +20,8 @@ namespace FacebookApp.Controllers
            int limit = 25;
            string pageId = "383796804983536";
            int timeStamp = 1429029016;
-    
-           List<String> Leads = FacebookPageFeed.GetLeads(pageId, timeStamp, limit);
+           string leadSource = "All"; // Likes = to get lead from likes, Comments = to get leads from Comment, Timeline Post = to get lead from time line posts 
+           List<List<KeyValuePair<string, string>>> Leads = FacebookPageFeed.GetLeads(pageId, timeStamp, limit, leadSource);
           
            return View();
          }
