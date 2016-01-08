@@ -1,100 +1,107 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Configuration;
 
 namespace FacebookApp.Lib
 {
+    /// <summary>
+    /// Class FacebookPageFeed.
+    /// </summary>
     public class FacebookPageFeed
     {
-         public static string _AppId = ConfigurationManager.AppSettings["AppId"].ToString();
-         public static string _AppSecret = ConfigurationManager.AppSettings["AppSecret"].ToString();
-         public static string _FacebookAPIUrl = ConfigurationManager.AppSettings["FacebookAPIUrl"].ToString();
+        /// <summary>
+        /// The application identifier
+        /// </summary>
+        public static string AppId = ConfigurationManager.AppSettings["AppId"];
+        /// <summary>
+        /// The application secret
+        /// </summary>
+        public static string AppSecret = ConfigurationManager.AppSettings["AppSecret"];
+        /// <summary>
+        /// The facebook API URL
+        /// </summary>
+        public static string FacebookApiUrl = ConfigurationManager.AppSettings["FacebookAPIUrl"];
         // public static string _UserAuthToken = "CAAGJLYa5elsBADIim4j2m2ZCOc9GewKiia5DoiytbCgfQncIt238LModEMRHalxTVyht5GFKJnNBjoA5yRN68SHH9rrNansoukF4qJp9ZBcSDOKo9kEw6WWFI9DRZAaFKDgUmCuO1viZAti7wGgY2wAfaMFpE3VRGKVZCT2Ke41koPAukV3YZCZBnCLd0E2etAisy7PQ4nFWfK7eTgyovLU";
 
+        /// <summary>
+        /// Gets the access token.
+        /// </summary>
+        /// <param name="clientId">The client identifier.</param>
+        /// <param name="clientSecret">The client secret.</param>
+        /// <returns>System.String.</returns>
         public static string GetAccessToken(string clientId, string clientSecret)
         {
-            string ResultSet; string AcessToken = string.Empty;
-            try
-            {
-                string ApiUrl = _FacebookAPIUrl+ "/oauth/access_token?type=client_cred&client_id=" + clientId + "&client_secret=" + clientSecret;
-                ResultSet = TextServiceConsumer.Get(ApiUrl).ToString();
-                String[] arr = ResultSet.Split('=');
-                AcessToken = arr[1];
-            }
-            catch (Exception ex)
-            {
-
-                throw ex;
-            }
-            return AcessToken;
+            var apiUrl = FacebookApiUrl+ "/oauth/access_token?type=client_cred&client_id=" + clientId + "&client_secret=" + clientSecret;
+            var resultSet = TextServiceConsumer.Get(apiUrl);
+            var arr = resultSet.Split('=');
+            var acessToken = arr[1];
+            return acessToken;
         }
+        /// <summary>
+        /// Updates the user authentication token.
+        /// </summary>
+        /// <param name="currentAuthToken">The current authentication token.</param>
+        /// <returns>System.String.</returns>
         public static string UpdateUserAuthToken(string currentAuthToken) 
         {
-            string ResultSet; string AcessToken = string.Empty;
-            try
-            {
-                string ApiUrl = _FacebookAPIUrl+ "/oauth/access_token?client_id="+_AppId+"&client_secret="+_AppSecret+"&grant_type=fb_exchange_token&fb_exchange_token="+currentAuthToken;
-                ResultSet = TextServiceConsumer.Get(ApiUrl).ToString();
-                String[] arr = ResultSet.Split('=');
-                AcessToken = arr[1];
-            }
-            catch (Exception)
-            {
-                
-                throw;
-            }
-            return AcessToken;
+            string apiUrl =$"{FacebookApiUrl}/oauth/access_token?client_id={AppId}&client_secret={AppSecret}&grant_type=fb_exchange_token&fb_exchange_token={currentAuthToken}";
+            var resultSet = TextServiceConsumer.Get(apiUrl);
+            var arr = resultSet.Split('=');
+            var acessToken = arr[1];
+            return acessToken;
         }
+        /// <summary>
+        /// Gets the facebook page feeds.
+        /// </summary>
+        /// <param name="pageId">The page identifier.</param>
+        /// <param name="timeStamp">The time stamp.</param>
+        /// <param name="limit">The limit.</param>
+        /// <returns>System.Object.</returns>
         public static object GetFacebookPageFeeds(string pageId, int timeStamp, int limit)
         {
-            object ResultSet;
-            string accessToken = FacebookPageFeed.GetAccessToken(_AppId, _AppSecret);
+            var accessToken = GetAccessToken(AppId, AppSecret);
             //string accessToken = UpdateUserAuthToken(_UserAuthToken);
-            try
-            {
-                string ApiUrl = _FacebookAPIUrl+ "/" + pageId + "/feed?since=" + timeStamp + "&limit=" + limit + "&access_token=" + accessToken;
-                ResultSet = JsonServiceConsumer.Get(ApiUrl);
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-            return ResultSet;
+            var apiUrl =$"{FacebookApiUrl}/{pageId}/feed?since={timeStamp}&limit={limit}&access_token={accessToken}";
+            var resultSet = JsonServiceConsumer.Get(apiUrl);
+            return resultSet;
         }
 
+        /// <summary>
+        /// Fetches the lead details.
+        /// </summary>
+        /// <param name="profileId">The profile identifier.</param>
+        /// <returns>List&lt;KeyValuePair&lt;System.String, System.String&gt;&gt;.</returns>
         public static List<KeyValuePair<string, string>> FetchLeadDetails(string profileId)
         {
            
-            List<KeyValuePair<string, string>> LeadData = new List<KeyValuePair<string, string>>();
+            var leadData = new List<KeyValuePair<string, string>>();
             try
             {
-                string ApiUrl = _FacebookAPIUrl+ "/" + profileId;
-                object ResultSet = JsonServiceConsumer.Get(ApiUrl);
-                var Result = (JToken)JsonConvert.DeserializeObject(ResultSet.ToString());
-                if (Result != null)
+                var apiUrl = FacebookApiUrl+ "/" + profileId;
+                var resultSet = JsonServiceConsumer.Get(apiUrl);
+                var result = (JToken)JsonConvert.DeserializeObject(resultSet.ToString());
+                if (result != null)
                 {
-                    if (Result["username"] != null)
+                    if (result["username"] != null)
                     {
-                        LeadData.Add(new KeyValuePair<string, string>("UserName", Result["username"].ToString()));
+                        leadData.Add(new KeyValuePair<string, string>("UserName", result["username"].ToString()));
                     }
-                    if (Result["gender"] != null)
+                    if (result["gender"] != null)
                     {
-                        LeadData.Add(new KeyValuePair<string, string>("Gender", Result["gender"].ToString()));
+                        leadData.Add(new KeyValuePair<string, string>("Gender", result["gender"].ToString()));
                        // LeadData.Add(Result["gender"].ToString());
                     }
-                    if (Result["link"] != null)
+                    if (result["link"] != null)
                     {
-                        LeadData.Add(new KeyValuePair<string, string>("ProfileLink", Result["link"].ToString()));
+                        leadData.Add(new KeyValuePair<string, string>("ProfileLink", result["link"].ToString()));
                        // LeadData.Add(Result["link"].ToString());
                     }
-                    if (Result["locale"] != null)
+                    if (result["locale"] != null)
                     {
-                        LeadData.Add(new KeyValuePair<string, string>("CountryCode", Result["locale"].ToString()));
+                        leadData.Add(new KeyValuePair<string, string>("CountryCode", result["locale"].ToString()));
                         //LeadData.Add(Result["locale"].ToString());
                     }
                 }
@@ -104,116 +111,112 @@ namespace FacebookApp.Lib
                 
                 throw ex;
             }
-            return LeadData;
+            return leadData;
         }
+        /// <summary>
+        /// Gets the leads.
+        /// </summary>
+        /// <param name="pageId">The page identifier.</param>
+        /// <param name="timeStamp">The time stamp.</param>
+        /// <param name="limit">The limit.</param>
+        /// <param name="leadSource">The lead source.</param>
+        /// <returns>List&lt;List&lt;KeyValuePair&lt;System.String, System.String&gt;&gt;&gt;.</returns>
         public static List<List<KeyValuePair<string, string>>> GetLeads(string pageId, int timeStamp, int limit, string leadSource)
         {
 
-            List<List<KeyValuePair<string, string>>> Leads = new List<List<KeyValuePair<string, string>>>();
-            List<string> DuplicateCheck = new List<string>();
+            var leads = new List<List<KeyValuePair<string, string>>>();
+            var duplicateCheck = new List<string>();
 
-            object FacebookFeed = FacebookPageFeed.GetFacebookPageFeeds(pageId, timeStamp, limit);
+            var facebookFeed = FacebookPageFeed.GetFacebookPageFeeds(pageId, timeStamp, limit);
 
-            if (FacebookFeed != null)
+            if (facebookFeed == null) return leads;
+            var result = (JToken)JsonConvert.DeserializeObject(facebookFeed.ToString());
+            if (result?["data"] != null)
             {
-                var Result = (JToken)JsonConvert.DeserializeObject(FacebookFeed.ToString());
-                if (Result != null && Result["data"] != null)
+                foreach (var dataChild in result["data"].Children())
                 {
-                    foreach (var dataChild in Result["data"].Children())
+
+                    if (leadSource == "All" || leadSource == "Timeline Post")
                     {
-
-                        if (leadSource == "All" || leadSource == "Timeline Post")
+                        if (dataChild["from"] != null)
                         {
-                            if (dataChild["from"] != null)
+                            if (dataChild["from"]["id"].ToString() != pageId)
                             {
-                                if (dataChild["from"]["id"].ToString() != pageId)
-                                {
-                                    List<KeyValuePair<string, string>> LeadData = new List<KeyValuePair<string, string>>();
-                                    LeadData.Add(new KeyValuePair<string, string>("ProfileId",dataChild["from"]["id"].ToString()));
-                                    LeadData.Add(new KeyValuePair<string, string>("Name", dataChild["from"]["name"].ToString()));
-                                    LeadData.Add(new KeyValuePair<string, string>("Source", "Timeline Post"));
-                                    LeadData.Add(new KeyValuePair<string, string>("Message", dataChild["message"].ToString()));
-                                    //LeadData.Add(dataChild["from"]["name"].ToString());
-                                   // LeadData.Add("Timeline Post");
-                                   // LeadData.Add(dataChild["message"].ToString());
-                                    List<KeyValuePair<string, string>> LeadDetails = FetchLeadDetails(dataChild["from"]["id"].ToString());
-                                    var Res = LeadData.Concat(LeadDetails);
-                                    LeadData = Res.ToList();
-                                    // string duplicate_check = string.Join(",", LeadData.ToArray());
-                                    if (DuplicateCheck.Contains(dataChild["from"]["id"].ToString()) == false)
+                                var leadData =
+                                    new List<KeyValuePair<string, string>>
                                     {
-                                        Leads.Add(LeadData);
-                                        DuplicateCheck.Add(dataChild["from"]["id"].ToString());
-                                    }
+                                        new KeyValuePair<string, string>("ProfileId",
+                                            dataChild["from"]["id"].ToString()),
+                                        new KeyValuePair<string, string>("Name",
+                                            dataChild["from"]["name"].ToString()),
+                                        new KeyValuePair<string, string>("Source", "Timeline Post"),
+                                        new KeyValuePair<string, string>("Message", dataChild["message"].ToString())
+                                    };
+                                   
+                                var leadDetails = FetchLeadDetails(dataChild["from"]["id"].ToString());
+                                var res = leadData.Concat(leadDetails);
+                                leadData = res.ToList();
+                                if (duplicateCheck.Contains(dataChild["from"]["id"].ToString()) == false)
+                                {
+                                    leads.Add(leadData);
+                                    duplicateCheck.Add(dataChild["from"]["id"].ToString());
                                 }
                             }
                         }
-                        if (leadSource == "All" || leadSource == "Likes")
+                    }
+                    if (leadSource == "All" || leadSource == "Likes")
+                    {
+                        if (dataChild["likes"]?["data"] != null)
                         {
-                            if (dataChild["likes"] != null && dataChild["likes"]["data"] != null)
+                            foreach (var lead in dataChild["likes"]["data"].Children())
                             {
-                                foreach (var lead in dataChild["likes"]["data"].Children())
-                                {
-                                    if (lead["id"].ToString() != pageId)
+                                if (lead["id"].ToString() == pageId) continue;
+                                var leadData =
+                                    new List<KeyValuePair<string, string>>
                                     {
-                                        List<KeyValuePair<string, string>> LeadData = new List<KeyValuePair<string, string>>();
-                                        LeadData.Add(new KeyValuePair<string, string>("ProfileId", lead["id"].ToString()));
-                                        LeadData.Add(new KeyValuePair<string, string>("Name", lead["name"].ToString()));
-                                        LeadData.Add(new KeyValuePair<string, string>("Source", "Like"));
+                                        new KeyValuePair<string, string>("ProfileId", lead["id"].ToString()),
+                                        new KeyValuePair<string, string>("Name", lead["name"].ToString()),
+                                        new KeyValuePair<string, string>("Source", "Like")
+                                    };
 
-                                        //List<String> LeadData = new List<String>();
-                                        // LeadData.Add(lead["id"].ToString());
-                                        // LeadData.Add(lead["name"].ToString());
-                                        //  LeadData.Add("Like");
-                                        List<KeyValuePair<string, string>> LeadDetails = FetchLeadDetails(lead["id"].ToString());
-                                        var Res = LeadData.Concat(LeadDetails);
-                                        LeadData = Res.ToList();
-                                        //string LeadData = lead["id"].ToString() + ',' + lead["name"].ToString();
-                                        if (DuplicateCheck.Contains(lead["id"].ToString()) == false)
-                                        {
-                                            Leads.Add(LeadData);
-                                            DuplicateCheck.Add(lead["id"].ToString());
-                                        }
-                                    }
-                                }
+                                        
+                                var leadDetails = FetchLeadDetails(lead["id"].ToString());
+                                var res = leadData.Concat(leadDetails);
+                                leadData = res.ToList();
+                                if (duplicateCheck.Contains(lead["id"].ToString())) continue;
+                                leads.Add(leadData);
+                                duplicateCheck.Add(lead["id"].ToString());
                             }
                         }
-                        if (leadSource == "All" || leadSource == "Comments")
+                    }
+                    if (leadSource != "All" && leadSource != "Comments") continue;
+                    {
+                        if (dataChild["comments"]?["data"] == null) continue;
+                        foreach (var lead in dataChild["comments"]["data"].Children())
                         {
-                            if (dataChild["comments"] != null && dataChild["comments"]["data"] != null)
-                            {
-                                foreach (var lead in dataChild["comments"]["data"].Children())
+                            if (lead["from"]["id"].ToString() == pageId) continue;
+                            var leadData =
+                                new List<KeyValuePair<string, string>>
                                 {
-                                    if (lead["from"]["id"].ToString() != pageId)
-                                    {
-                                        List<KeyValuePair<string, string>> LeadData = new List<KeyValuePair<string, string>>();
-                                        LeadData.Add(new KeyValuePair<string, string>("ProfileId", lead["from"]["id"].ToString()));
-                                        LeadData.Add(new KeyValuePair<string, string>("Name", lead["from"]["name"].ToString()));
-                                        LeadData.Add(new KeyValuePair<string, string>("Source", "Comment"));
-                                        LeadData.Add(new KeyValuePair<string, string>("Message", lead["message"].ToString()));
-                                        /* List<String> LeadData = new List<String>();
-                                         LeadData.Add(lead["from"]["id"].ToString());
-                                         LeadData.Add(lead["from"]["name"].ToString());
-                                         LeadData.Add("Comment");
-                                         LeadData.Add(lead["message"].ToString()); */
-                                        List<KeyValuePair<string, string>> LeadDetails = FetchLeadDetails(lead["from"]["id"].ToString());
-                                        var Res = LeadData.Concat(LeadDetails);
-                                        LeadData = Res.ToList();
-                                        //string LeadData = lead["from"]["id"].ToString() + ',' + lead["from"]["name"].ToString();
-                                        if (DuplicateCheck.Contains(lead["from"]["id"].ToString()) == false)
-                                        {
-                                            Leads.Add(LeadData);
-                                            DuplicateCheck.Add(lead["from"]["id"].ToString());
-                                        }
-                                    }
-                                }
-                            }
+                                    new KeyValuePair<string, string>("ProfileId",
+                                        lead["from"]["id"].ToString()),
+                                    new KeyValuePair<string, string>("Name", lead["from"]["name"].ToString()),
+                                    new KeyValuePair<string, string>("Source", "Comment"),
+                                    new KeyValuePair<string, string>("Message", lead["message"].ToString())
+                                };
+                                       
+                            var leadDetails = FetchLeadDetails(lead["from"]["id"].ToString());
+                            var res = leadData.Concat(leadDetails);
+                            leadData = res.ToList();
+                            if (duplicateCheck.Contains(lead["from"]["id"].ToString())) continue;
+                            leads.Add(leadData);
+                            duplicateCheck.Add(lead["from"]["id"].ToString());
                         }
                     }
                 }
             }
 
-            return Leads;
+            return leads;
         }
        
     }
